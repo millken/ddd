@@ -3,7 +3,7 @@
 #include "config.h"
 #include "utils.h"
  
-configuration config;
+Configuration config;
 
 void dns_send(char *trgt_ip, int trgt_p, char *dns_srv, int dns_p,
 	unsigned char *dns_record);

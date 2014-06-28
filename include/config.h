@@ -3,18 +3,23 @@
 
 #define DDD_VERSION "v0.01"
 
+#define BOOL unsigned char
+#define TRUE 1
+#define FALSE 0
+
 static int handler(void* user, const char* section, const char* name,
                    const char* value);
-               
-void parse_config();
 
+void daemonize_init();               
+void parse_config();
+int bool_value(char *value);
   
 typedef struct
 {
-	const char* daemon;
+	BOOL daemon;
 	
 	//dns config
-	const char* dns_active;
+	BOOL dns_active;
 	const char* dns_type;
 	const char* dns_domain;
 	const char* dns_sourceip;
@@ -22,7 +27,7 @@ typedef struct
 	const char* dns_file;
 	int dns_threads, dns_mode;
 		
-}configuration;
+}Configuration;
 
 
 #endif /// _CONFIG_H
