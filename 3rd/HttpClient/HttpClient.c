@@ -17,7 +17,7 @@
 #include "sds.h"
 
 static int HttpClient_connect(HttpClient* self, char *host, u_short port);
-static bool HttpClient_open(HttpClient* self, const char* url);
+char* HttpClient_getError(HttpClient* self);
 static bool HttpClient_free(HttpClient* self);
 static bool HttpClient_setDefaultHeader(HttpClient* self);
 static bool HttpClient_setHeader(HttpClient* self, char* header_name, char* header_value);
@@ -30,7 +30,7 @@ char * HttpClient_get(HttpClient* self, char* url);
 
 
 static const HttpClient object_template = {
-    .open = HttpClient_open,
+    .getError = HttpClient_getError,
     .connect = HttpClient_connect,
     .setDefaultHeader = HttpClient_setDefaultHeader,
     .setHeader = HttpClient_setHeader,
@@ -65,13 +65,12 @@ HttpClient* New_HttpClient(void)
 //https://github.com/wg/wrk/blob/master/src/wrk.c
 struct http_url * HttpClient_parse_url(HttpClient* self, char *url)
 {
-    struct http_parser_url parser_url;
+    struct http_parser_url parser_url={0};
     struct http_url *urls;
     urls = self->urls;
 
     if (http_parser_parse_url(url, strlen(url), 0, &parser_url)) {
-        fprintf(stderr, "invalid URL: %s\n", url);
-        exit(1);
+        return NULL;
     }
 
     urls->scheme = extract_url_part(url, &parser_url, UF_SCHEMA);
@@ -104,7 +103,7 @@ static int HttpClient_connect(HttpClient* self, char *host, u_short port)
     int sock = -1;
 
     if((hp = gethostbyname(host)) == NULL){
-        printf("Unable to resolve: %s\n", host);
+        sprintf(self->error, "Unable to resolve: %s", host);
         return 0;
     }
     bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
@@ -118,13 +117,13 @@ static int HttpClient_connect(HttpClient* self, char *host, u_short port)
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv_recv, sizeof(tv_recv));
 
     if(sock == -1){
-        printf("setsockopt error\n");
+        sprintf(self->error, "setsockopt error");
         return sock;
     }
     
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         if (errno == EINPROGRESS) {
-            fprintf(stderr, "connect %s timeout\n", host);
+            sprintf(self->error, "connect %s timeout", host);
             return -1;
         }
         return sock;
@@ -157,7 +156,7 @@ char * HttpClient_format_request(HttpClient* self)
     struct http_header *header = self->headers;
     while (header->next != NULL) {
         header = header->next;
-        aprintf(&head, "%s: %s\r\n", header->name, header->value);
+        if(header->name != NULL && header->value != NULL) aprintf(&head, "%s: %s\r\n", header->name, header->value);
     }
     aprintf(&req, "GET %s HTTP/1.1\r\n", self->urls->path);
     if (self->urls->host) aprintf(&req, "Host: %s", self->urls->host);
@@ -171,7 +170,10 @@ char * HttpClient_format_request(HttpClient* self)
 char * HttpClient_get(HttpClient* self, char* url)
 {
 
-    self->parse_url(self, url);
+    if (self->parse_url(self, url) == NULL) {
+        sprintf(self->error, "invalid URL: %s", url);
+        return NULL;
+    }
     u_short port = self->urls->port != NULL ? atoi(self->urls->port) : 80;
 
     char sendline[MAXLINE + 1], recvline[MAXLINE + 1];
@@ -181,8 +183,7 @@ char * HttpClient_get(HttpClient* self, char* url)
     self->response->fd = self->connect(self, self->urls->host, port); 
     if (self->response->fd <= 0)
     {
-        fprintf(stderr, "socket connect error! %d\n", self->response->fd);
-        exit(1);
+        return NULL;
     }
 
     http_parser parser;
@@ -192,9 +193,7 @@ char * HttpClient_get(HttpClient* self, char* url)
     write(self->response->fd, request, strlen(request));
 
     if (http_read_headers(&parser, self->response) != 0) {
-        printf("response error\n");
-        exit(1);
-        //free_response(response);
+        sprintf(self->error, " read hreader error");
         return NULL;
     }
     int count = 0;
@@ -234,9 +233,11 @@ static bool HttpClient_setDefaultHeader(HttpClient* self)
 static bool HttpClient_setHeader(HttpClient* self, char* header_name, char* header_value)
 {
     struct http_header *header = self->headers;
+    sds s;
     while (header != NULL) {
-        if (header->name != NULL && strcmp((const char*)header->name, (const char*)header_name) == 0 ) {
-            header->value = header_value;
+        if (header->name != NULL /*&& strcmp((const char*)header->name, (const char*)header_name) == 0*/ ) {
+            //s = sdsnew(header_value);
+            //header->value = sdscat(s, header_value);
             return true;
         }        
         if (header->next == NULL) {
@@ -246,8 +247,10 @@ static bool HttpClient_setHeader(HttpClient* self, char* header_name, char* head
         header = header->next;
     }
     header = header->next;
-    header->name = header_name;
-    header->value = header_value;
+    s = sdsnew(header_name);
+    header->name = sdscat(s, header_name);
+    s = sdsnew(header_value);
+    header->value = sdscat(s, header_value);
     //printf("\nheader_name = %s,  %d\n", header_name, strlen(header_name));
     //alloc_cpy(header->name, header_name, strlen(header_name));
     //alloc_cpy(header->value, header_value, strlen(header_value));
@@ -270,15 +273,23 @@ static bool HttpClient_addHeader(HttpClient* self, char* header_name, char* head
     return true;
 }
 
-static bool HttpClient_open(HttpClient* self, const char* url)
+char* HttpClient_getError(HttpClient* self)
 {
-	self->url = (char *)url;
-    //printf("%s %s\n", __FUNCTION__, url);
-    return true;
+    return strlen(self->error) ? self->error : NULL;
 }
 
 static bool HttpClient_free(HttpClient* self)
 {
+    http_header *header = self->headers;
+
+    while (header != NULL) {
+        struct http_header *prev = header;
+        if(header->name != NULL) sdsfree(header->name);
+        if(header->value != NULL) sdsfree(header->value);
+        header = header->next;
+        free(prev);
+    }
+    free(self->headers);
 	if (self != NULL)free(self);
 	return true;
 }
@@ -359,7 +370,6 @@ static int http_read_headers(http_parser *parser, http_response *response)
 
     while (response->headers_complete == 0 && (ret = read(fd, buf, sizeof(buf))) > 0) {
         if (http_parser_execute(parser, &parser_settings, buf, ret) != (size_t) ret) {
-            fprintf(stderr, "parse error\n");
             return -1;
         }
     }

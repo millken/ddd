@@ -34,14 +34,14 @@ typedef struct http_header {
     struct http_header *next;
 }http_header;
 
-struct request {
+typedef struct http_request {
     int method;
     const char *host;
     const char *path;
     int port;
     http_header *headers;
     const char *body;
-} ;
+} http_request;
 
 //https://github.com/georgi/hitpoint/blob/master/hitpoint.h
 typedef struct http_response {
@@ -59,16 +59,13 @@ typedef struct http_response {
 HttpClient* New_HttpClient(void);
 
 struct HttpClient {
-	char *url;
-	char *method;
-	char *path;
-	char *host;
-	char *user_agent;
+	char error[200];
+
     http_url *urls;
 	http_header *headers;
     http_response *response;
 		
-	bool (*open)(HttpClient* self, const char* url);
+	char* (*getError)(HttpClient* self);
 	int (*connect)(HttpClient* self, char *host, u_short port);
 	bool (*setDefaultHeader)(HttpClient* self);
 	bool (*setHeader)(HttpClient* self, char* header_name, char* header_value);
