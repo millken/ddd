@@ -4,6 +4,9 @@
 *.obj
 *.elf
 
+objs
+ddd
+
 # Libraries
 *.lib
 *.a
