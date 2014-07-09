@@ -7,12 +7,21 @@ static int handler(void* user, const char* section, const char* name,
                    const char* value);
                
 void parse_config();
+
   
-typedef struct 
+typedef struct
 {
-    int version;
-    const char* name;
-    const char* email;
+	const char* daemon;
+	
+	//dns config
+	const char* dns_active;
+	const char* dns_type;
+	const char* dns_domain;
+	const char* dns_sourceip;
+	const char* dns_targetip;
+	const char* dns_file;
+	int dns_threads, dns_mode;
+		
 }configuration;
 
 

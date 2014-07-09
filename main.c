@@ -1,8 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "config.h"
-
-configuration config;
 
 
 int main(int argc, char* argv[])
@@ -14,8 +11,8 @@ int main(int argc, char* argv[])
 	}
 		
    parse_config();
-   printf("Config loaded from 'test.ini': version=%d, name=%s, email=%s\n",
-        config.version, config.name, config.email);
+   start_worker();
+
     return 0;
 }
 

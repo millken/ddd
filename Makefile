@@ -1,13 +1,13 @@
 SYS := $(shell gcc -dumpmachine)
 CC = gcc
-OPTIMIZATION = -O3
+OPTIMIZATION = -O3 
 
 CFLAGS = -lm  -lpthread $(HARDMODE)
 ifeq (, $(findstring linux, $(SYS)))
 CFLAGS = 
 endif
 
-DEBUG = -g -ggdb
+DEBUG = -g -ggdb 
 
 ifneq ($(SMPDEBUG),)
 DEBUG = -g -ggdb -D SMPDEBUG
