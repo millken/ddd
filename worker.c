@@ -10,7 +10,7 @@
 #include "utils.h"
 
  
-configuration config;
+Configuration config;
 
 
 int fork_process(void (*func)())
@@ -46,7 +46,7 @@ int new_thread_p(void *func, void *i)
 
 void start_worker()
 {
-   if (strcasecmp(config.dns_active, "true") == 0) {
+   if (config.dns_active) {
  		printf("dns child\n");
 		fork_process(dns_master);
    }
