@@ -85,6 +85,21 @@ static int parse_handler(void* user, const char* section, const char* name,
     	pconfig->dns_targetip = strdup(value);
     } else if (MATCH("dns", "file")) {
     	pconfig->dns_file = strdup(value);
+    /*udp config*/
+    } else if (MATCH("udp", "active")) {
+        pconfig->udp_active = bool_value((char *)value);        
+    } else if (MATCH("udp", "source-ip")) {
+        pconfig->udp_sourceip = strdup(value);        
+    } else if (MATCH("udp", "target-ip")) {
+        pconfig->udp_targetip = strdup(value); 
+    } else if (MATCH("udp", "source-port")) {
+        pconfig->udp_sourceport = atoi(value);
+    } else if (MATCH("udp", "target-port")) {
+        pconfig->udp_targetport = atoi(value);                               
+    } else if (MATCH("udp", "package-size")) {
+        pconfig->udp_pkgsize = atoi(value);       
+    } else if (MATCH("udp", "sleep-time")) {
+        pconfig->udp_sleeptime = atoi(value);             
     } else {
         return 0;  /* unknown section/name, error */
     }

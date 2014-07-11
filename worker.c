@@ -3,10 +3,11 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <pthread.h>
+//#include <pthread.h>
 #include "config.h"
 #include "worker.h"
 #include "dns.h"
+#include "udp.h"
 #include "utils.h"
 
  
@@ -27,7 +28,7 @@ int fork_process(void (*func)())
     return ret;
 }
 
-
+/*
 int new_thread_p(void *func, void *i)
 {
     pthread_t thread;
@@ -43,6 +44,7 @@ int new_thread_p(void *func, void *i)
 
     return 1;
 }
+*/
 
 void start_worker()
 {
@@ -50,18 +52,24 @@ void start_worker()
  		printf("dns child\n");
 		fork_process(dns_master);
    }
-   printf("Config loaded : daemon=%s, dns.active=%s,dns.threads=%d, dns.domain=%s \n",
+   if (config.udp_active)
+   {
+       printf("udp child\n");
+       fork_process(udp_worker);
+   }
+   printf("Config loaded : daemon=%d, dns.active=%d,dns.threads=%d, dns.domain=%s \n",
         config.daemon, config.dns_active, config.dns_threads, config.dns_domain);
-	while(1) {
-		sleep(1);
-	}
+    while(1) 
+    {
+        sleep(5);
+    }
 }
 
 void dns_master()
 {
 	int i;
 	for (i=0; i < config.dns_threads; i++) {
-		new_thread_p(dns_send1, 0);
+		//new_thread_p(dns_send1, 0);
 	}
 	printf("dns master start\n");
 }

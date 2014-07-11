@@ -7,7 +7,7 @@ ifeq (, $(findstring linux, $(SYS)))
 CFLAGS = 
 endif
 
-DEBUG = -g -ggdb 
+DEBUG = -g 
 
 ifneq ($(SMPDEBUG),)
 DEBUG = -g -ggdb -D SMPDEBUG
@@ -38,3 +38,4 @@ install:all
 clean:
 	rm -rf objs;
 	rm -rf ddd;
+	rm -f core.*

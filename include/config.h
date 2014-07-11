@@ -25,8 +25,18 @@ typedef struct
 	const char* dns_sourceip;
 	const char* dns_targetip;
 	const char* dns_file;
-	int dns_threads, dns_mode;
-		
+	int dns_threads;
+	int dns_mode;
+
+	//udp config
+	BOOL udp_active;
+	const char* udp_sourceip;
+	const char* udp_targetip;
+	int udp_sourceport;
+	int udp_targetport;
+	int udp_pkgsize;
+	int udp_sleeptime;
+
 }Configuration;
 
 

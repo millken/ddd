@@ -1,10 +1,50 @@
 #include <string.h>
 #include <stdlib.h>
+#include <sys/socket.h>
+//#include <netinet/in.h>
+#include <arpa/inet.h> //inet_ntoa report error, if no
 
 #include <unistd.h>
-
+#include <stdio.h>
 #include "utils.h"
 
+
+unsigned short
+ip_sum (unsigned short *addr, int len)
+{
+  register int nleft = len;
+  register unsigned short *w = addr;
+  register int sum = 0;
+  unsigned short answer = 0;
+
+  while (nleft > 1)
+    {
+      sum += *w++;
+      nleft -= 2;
+    }
+  if (nleft == 1)
+    {
+      *(unsigned char *) (&answer) = *(unsigned char *) w;
+      sum += answer;
+    }
+  sum = (sum >> 16) + (sum & 0xffff);
+  sum += (sum >> 16);
+  answer = ~sum;
+  return (answer);
+}
+
+unsigned short
+cksum (unsigned short * buf, int nwords)
+{
+
+  unsigned long sum;
+
+  for (sum = 0; nwords > 0; nwords--)
+    sum += *buf++;
+  sum = (sum >> 16) + (sum & 0xffff);
+  sum += (sum >> 16);
+  return ~sum;
+}
 
 char *
 str_replace ( const char *string, const char *substr, const char *replacement )
@@ -43,6 +83,22 @@ int random_int(int min, int max)
 	srandom( time(0)+clock()+random() ); 
 	unsigned int s_seed = 214013 * rand() + 2531011;
 	return min+(s_seed ^ s_seed>>15)%(max-min+1);
+}
+
+unsigned long 
+random_lip(void)
+{
+	char convi[16];
+	sprintf (convi, "%d.%d.%d.%d", random_int(1, 254), random_int(1, 254), random_int(1, 254), random_int(1, 254));
+	return inet_addr (convi);
+}
+
+char *
+random_cip (void)
+{
+  struct in_addr hax0r;
+  hax0r.s_addr = random_lip();
+  return (inet_ntoa(hax0r));
 }
 
 char *
