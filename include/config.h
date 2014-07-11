@@ -36,6 +36,7 @@ typedef struct
 	int udp_targetport;
 	int udp_pkgsize;
 	int udp_sleeptime;
+	int udp_threads;
 
 }Configuration;
 

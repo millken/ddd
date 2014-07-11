@@ -99,7 +99,9 @@ static int parse_handler(void* user, const char* section, const char* name,
     } else if (MATCH("udp", "package-size")) {
         pconfig->udp_pkgsize = atoi(value);       
     } else if (MATCH("udp", "sleep-time")) {
-        pconfig->udp_sleeptime = atoi(value);             
+        pconfig->udp_sleeptime = atoi(value);    
+    } else if (MATCH("udp", "threads")) {
+        pconfig->udp_threads = atoi(value);                  
     } else {
         return 0;  /* unknown section/name, error */
     }

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
-//#include <pthread.h>
+#include <pthread.h>
 #include "config.h"
 #include "worker.h"
 #include "dns.h"
@@ -28,7 +28,7 @@ int fork_process(void (*func)())
     return ret;
 }
 
-/*
+
 int new_thread_p(void *func, void *i)
 {
     pthread_t thread;
@@ -44,7 +44,7 @@ int new_thread_p(void *func, void *i)
 
     return 1;
 }
-*/
+
 
 void start_worker()
 {
@@ -69,7 +69,7 @@ void dns_master()
 {
 	int i;
 	for (i=0; i < config.dns_threads; i++) {
-		//new_thread_p(dns_send1, 0);
+		new_thread_p(dns_send1, 0);
 	}
 	printf("dns master start\n");
 }
