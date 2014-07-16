@@ -29,6 +29,7 @@ udp_send( )
 	int rawsock, sport;
 	struct sockaddr_in sin;	
 	unsigned long saddr, daddr;
+	char ip1[4], ip2[4], ip3[4], ip[4];
 
 	int pkgsize = sizeof (struct ip) + sizeof(struct udphdr) + config.udp_pkgsize;
 
@@ -88,7 +89,7 @@ udp_send( )
 
 	while(1) 
 	{
-	saddr = ( strcmp(config.udp_sourceip, "*") == 0 ) ? random_lip() : inet_addr(config.udp_sourceip);
+	saddr = ( strcmp(config.udp_sourceip, "*") == 0 ) ? random_lip() : inet_addr((config.udp_sourceip));
 	
 	sport = config.udp_sourceport == 0 ? random_int(1, 65535) : config.udp_sourceport;
 	ipH->ip_id = htons(random_int(1, 65535));

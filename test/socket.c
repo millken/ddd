@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
          "User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0\r\n"
          "Pragma: no-cache\r\n"
          "Cache-Control: no-cache\r\n"
-         "Connection: close\r\n\r\n", "/", argv[1]);
+         "Connection: close\r\n\r\n", "/config.ini", argv[1]);
 
     fd = socket_connect(argv[1], atoi(argv[2])); 
     if (fd <= 0)

@@ -6,6 +6,7 @@
 
 objs
 ddd
+test
 core.*
 
 # Libraries

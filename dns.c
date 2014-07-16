@@ -246,7 +246,7 @@ void dns_send1(/*char *trgt_ip, int trgt_p, char *dns_srv, int dns_p,	unsigned c
     if(sd==-1) printf("Could not create socket.\n");
     else sendto(sd, datagram, ip->tot_len, 0, (struct sockaddr *)&sin, sizeof(sin));
     
-    //sleep(1);
+    sleep(1);
     }
 	free(psgram);
 	close(sd);
