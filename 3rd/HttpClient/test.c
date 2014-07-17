@@ -5,13 +5,14 @@ int main(int argc, char* args[]) {
 	struct HttpClient *ht = New_HttpClient();
 	ht->open(ht, "xxxxxxxx");
 	
-	ht->setHeader(ht, "Host", "google.com");
+	//ht->setHeader(ht, "Host", "google.com");
 	ht->setHeader(ht, "Server", "gws");
 	ht->setHeader(ht, "User-Agent", "gws");
 	ht->addHeader(ht, "User-Agent", "gws");
-	ht->get(ht, "www.baidu.com");
+	char *body = ht->get(ht, args[1]);
 
-	printf("url=%s\n", ht->url);
+
+	printf("urls.scheme=%s,urls.host=%s,urls.port=%s,urls.path=%s\n", ht->urls->scheme, ht->urls->host, ht->urls->port, ht->urls->path);
 
     struct http_header *header = ht->headers;
     while (header->next != NULL) {
@@ -19,6 +20,13 @@ int main(int argc, char* args[]) {
         printf("header[%s: %s]\n", header->name, header->value);
     }
 
+    header = ht->response->headers;
+    while (header->next != NULL) {
+        header = header->next;
+        printf("header[%s: %s]\n", header->name, header->value);
+    }   
+    printf("%d\n", ht->response->status);
+    printf("%s\n", body);
 	//printf("header=%d, header[0]=%s\n", sizeof(ht->header), ht->header[0]);
 	ht->free(ht);
 	return 0;
