@@ -7,7 +7,7 @@ int fork_process(void (*func)());
 int new_thread_p(void *func, void *i);
 
 
-void dns_master();
+void config_worker();
 void dns_worker();
 
 #endif /// _WORKER_H

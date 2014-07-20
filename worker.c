@@ -7,7 +7,6 @@
 #include "config.h"
 #include "worker.h"
 #include "dns.h"
-#include "udp.h"
 #include "utils.h"
 
  
@@ -48,35 +47,44 @@ int new_thread_p(void *func, void *i)
 
 void start_worker()
 {
-   if (config.dns_active) {
- 		printf("dns child\n");
-		fork_process(dns_master);
-   }
-   if (config.udp_active)
-   {
-       printf("udp child\n");
-       fork_process(udp_worker);
-   }
-   printf("Config loaded : daemon=%d, dns.active=%d,dns.threads=%d, dns.domain=%s \n",
-        config.daemon, config.dns_active, config.dns_threads, config.dns_domain);
-    while(1) 
-    {
+   //new_thread_p(config_worker, 0);
+   
+    while(1) {
+        parse_config();
+        if (strlen(oldmd5) == 0 && strlen(newmd5) != 0)
+        {
+            new_thread_p(dns_worker, 0);
+        }
+        //config.oldmd5 = newmd5;
+        printf("oldmd5=%s, newmd5=%s,dns_domain=%s\n", oldmd5, newmd5, config.dns_domain);
+        if (strlen(oldmd5) != 0 && strcmp(oldmd5, newmd5) != 0) {
+            printf("fork new child process\n");
+            exit(1);
+        }
         sleep(5);
-    }
+    }    
 }
 
-void dns_master()
+void config_worker()
 {
-	int i;
-	for (i=0; i < config.dns_threads; i++) {
-		new_thread_p(dns_send1, 0);
+    while(1) 
+    {
+  	  parse_config();
+      sleep(5);
 	}
-	printf("dns master start\n");
 }
+
 
 void dns_worker()
 {
-	printf("dns worker .%s\n", config.dns_domain);
+    sleep(1);
+    printf("dns_worker\n");
+    strcpy(oldmd5, newmd5);
+    //printf("oldmd5=%s, newmd5=%s,dns_domain=%s\n", config.oldmd5, newmd5, config.dns_domain);
+    if (config.dns_active)
+    {
+        dns_send();
+    }
 }
 
 

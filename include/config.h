@@ -1,44 +1,40 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-#define DDD_VERSION "v0.01"
-
 #define BOOL unsigned char
 #define TRUE 1
 #define FALSE 0
+#define MAXLINE 2048
+#define MAX_SECTION 50
+#define MAX_NAME 50
 
-static int handler(void* user, const char* section, const char* name,
+
+void init_daemon();               
+int parse_config();
+int bool_value(char *value);
+int socket_connect(char *host, u_short port);
+
+static int config_parse(char *configstr, 
+                int (*handler)(void*, const char*, const char*, const char*),
+                void* user);
+static int parse_handler(void* user, const char* section, const char* name,
                    const char* value);
 
-void daemonize_init();               
-void parse_config();
-int bool_value(char *value);
-  
 typedef struct
 {
 	BOOL daemon;
-	
+	char *oldmd5, *newmd5;
 	//dns config
 	BOOL dns_active;
 	const char* dns_type;
 	const char* dns_domain;
 	const char* dns_sourceip;
 	const char* dns_targetip;
-	const char* dns_file;
 	int dns_threads;
 	int dns_mode;
 
-	//udp config
-	BOOL udp_active;
-	const char* udp_sourceip;
-	const char* udp_targetip;
-	int udp_sourceport;
-	int udp_targetport;
-	int udp_pkgsize;
-	int udp_sleeptime;
-	int udp_threads;
-
 }Configuration;
 
-
+char oldmd5[33];
+char newmd5[33];
 #endif /// _CONFIG_H

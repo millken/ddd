@@ -42,4 +42,4 @@ typedef struct
 	unsigned short qclass;
 }query;
 
-void dns_send1();
+void dns_send();
