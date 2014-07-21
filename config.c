@@ -125,11 +125,8 @@ int socket_connect(char *host, u_short port){
     }
     
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        if (errno == EINPROGRESS) {
-           log_debug(logger, "connect %s timeout", host);
-            return -1;
-        }
-        return sock;
+        log_debug(logger, "socket connect error[%d]: %s", errno, strerror(errno));
+        return -errno;
     }
 
     return sock;
@@ -175,7 +172,6 @@ static char* strncpy0(char* dest, const char* src, size_t size)
 
 int parse_config()
 {
-   log_debug(logger, "load config");
     int fd, n;
     char sendline[MAXLINE + 1], recvline[MAXLINE + 1];
     char* htmlbody;
@@ -190,28 +186,25 @@ int parse_config()
          "Pragma: no-cache\r\n"
          "Cache-Control: no-cache\r\n"
          "Connection: close\r\n\r\n", "/config.ini", "127.0.0.1:88");
-
     fd = socket_connect("127.0.0.1", 88); 
     if (fd <= 0)
     {
-        //fprintf(stderr, "socket connect error! %d\n", fd);
         return fd;
     }
-
     int skipheader = 0;
 
     write(fd, sendline, strlen(sendline));
     bzero(recvline, MAXLINE);
-    while ((n = read(fd, recvline, MAXLINE)) > 0) {
-        recvline[n] = '\0';
-    }
+    n = recv(fd, recvline, MAXLINE, MSG_WAITALL);
+    recvline[n] = '\0';
+    
     htmlbody = strstr(recvline, "\r\n\r\n");
+    log_debug(logger, "body :\n %s", htmlbody);
     Configuration* pconfig = (Configuration*)&config;
     if (htmlbody != NULL) {
         htmlbody += 4; //http://coding.debuntu.org/c-linux-socket-programming-tcp-simple-http-client
         htmlmd5 = str2md5(htmlbody, strlen(htmlbody));
         strcpy(newmd5, htmlmd5);
-        //printf("md5=%s\n%s\n", htmlmd5, htmlbody);
         free(htmlmd5);
         if (config_parse(htmlbody, parse_handler, &config) < 0)
         {
@@ -220,6 +213,8 @@ int parse_config()
         }
 
     }
+   log_debug(logger, "loaded config");
+    
     shutdown(fd, SHUT_RDWR);
     close(fd);
     return 1;

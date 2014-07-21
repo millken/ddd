@@ -4,7 +4,7 @@
 #define BOOL unsigned char
 #define TRUE 1
 #define FALSE 0
-#define MAXLINE 2048
+#define MAXLINE 4098
 #define MAX_SECTION 50
 #define MAX_NAME 50
 

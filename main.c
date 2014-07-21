@@ -16,8 +16,8 @@ void usage()
 {
     char *b = "------------------------------------------------------------\n"
               "dns test tool " VERSION "\n\n"
-               "-d            debug level\n"
-               "-h            print this help and exit\n\n"
+               //"-d            debug level\n"
+               //"-h            print this help and exit\n\n"
                "-----------------------------------------------------------\n"
                "\n";
     fprintf(stderr, b, strlen(b));
