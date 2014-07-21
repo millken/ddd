@@ -85,12 +85,6 @@ int random_int(int min, int max)
 	return min+(s_seed ^ s_seed>>15)%(max-min+1);
 }
 
-char *
-int2char()
-{
-  
-}
-
 unsigned long 
 random_lip(void)
 {

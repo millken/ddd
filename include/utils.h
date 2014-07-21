@@ -1,6 +1,7 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
+
 char *
 str_replace ( const char *string, const char *substr, const char *replacement );
 

@@ -21,13 +21,17 @@ INCLUDES=-I$(PWD)/include/
 
 main.o:
 	[ -d objs ] || mkdir objs;
-	[ -d objs/3rd ] || mkdir objs/3rd;
 	cd objs && $(CC) -fPIC -c ../*.c $(DEBUG) $(INCLUDES);
 
 all: dns
+
+zxc: 
+	[ -d objs ] || mkdir objs;
+	cd objs && $(CC) -fPIC -c ../*.c $(OPTIMIZATION) $(INCLUDES);
+	$(CC) objs/*.o $(CFLAGS) $(OPTIMIZATION) -o dns
 	
 dns: main.o
-	$(CC) objs/3rd/*.o objs/*.o $(CFLAGS) $(DEBUG) -o $@
+	$(CC) objs/*.o $(CFLAGS) $(DEBUG) -o $@
 
 install:all
 	[ -d $(PREFIX) ] || mkdir $(PREFIX);

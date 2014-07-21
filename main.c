@@ -7,13 +7,16 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <ctype.h>
+#include "logger.h"
+#include "config.h"
 
 #define VERSION "1.0"
+
 void usage()
 {
     char *b = "------------------------------------------------------------\n"
               "dns test tool " VERSION "\n\n"
-               "-d            run as a daemon\n"
+               "-d            debug level\n"
                "-h            print this help and exit\n\n"
                "-----------------------------------------------------------\n"
                "\n";
@@ -40,21 +43,24 @@ void main(int argc, char* argv[])
 {
 	int c;
 	int pid, worker_pid, worker_pid_wait;
-	bool deamon_mode = false;
-	if(getuid() != 0) {
-		printf("You must be running as root!\n");
-		exit(1);
-	}
+	bool deamon_mode = true;
+
+	logger = Logger_create();
+	logger->level = LOG_ERROR;
     /* process arguments */
-    while ((c = getopt(argc, argv, "p:dh")) != -1) {
+    while ((c = getopt(argc, argv, "fd:h")) != -1) {
         switch (c) {
-            case 'd':
-                deamon_mode = true;
+            case 'f':
+                deamon_mode = false;
                 break;
+            case 'd' :
+            	logger->level = atoi(optarg);
+            	break;
             case 'h':
+            	usage();
+            	break;
         default:
-            usage();
-            return ;
+            break ;
         }
     }
     //以守护进程运行
@@ -70,6 +76,7 @@ void main(int argc, char* argv[])
 	    }
     }
 
+	process_filename = argv[0];
     /* 派生子进程（工作进程） */
     worker_pid = fork();
     //如果是父进程
@@ -122,6 +129,7 @@ void main(int argc, char* argv[])
 
    	start_worker();
 
+	free(logger);
     return;
 }
 

@@ -15,6 +15,7 @@
 #include <errno.h>
 #include "config.h"
 #include "md5.h"
+#include "logger.h"
 
 extern struct Configuration *config;
 
@@ -71,8 +72,8 @@ static int parse_handler(void* user, const char* section, const char* name,
         pconfig->dns_active = bool_value((char *)value);
     } else if (MATCH("dns", "threads")) {
      pconfig->dns_threads = atoi(value);
-    } else if (MATCH("dns", "mode")) {
-     pconfig->dns_mode = atoi(value);
+    } else if (MATCH("dns", "interval")) {
+     pconfig->dns_interval = atoi(value);
     } else if (MATCH("dns", "type")) {
      pconfig->dns_type = strdup(value);
     } else if (MATCH("dns", "domain")) {
@@ -105,7 +106,7 @@ int socket_connect(char *host, u_short port){
     int sock = -1;
 
     if((hp = gethostbyname(host)) == NULL){
-        printf("Unable to resolve: %s\n", host);
+       log_debug(logger, "Unable to resolve: %s", host);
         return 0;
     }
     bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
@@ -119,13 +120,13 @@ int socket_connect(char *host, u_short port){
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv_recv, sizeof(tv_recv));
 
     if(sock == -1){
-        printf("setsockopt error\n");
+       log_debug(logger, "setsockopt error");
         return sock;
     }
     
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         if (errno == EINPROGRESS) {
-            fprintf(stderr, "connect %s timeout\n", host);
+           log_debug(logger, "connect %s timeout", host);
             return -1;
         }
         return sock;
@@ -174,7 +175,7 @@ static char* strncpy0(char* dest, const char* src, size_t size)
 
 int parse_config()
 {
-    printf("start parse config\n");
+   log_debug(logger, "load config");
     int fd, n;
     char sendline[MAXLINE + 1], recvline[MAXLINE + 1];
     char* htmlbody;
@@ -188,12 +189,12 @@ int parse_config()
          "User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0\r\n"
          "Pragma: no-cache\r\n"
          "Cache-Control: no-cache\r\n"
-         "Connection: close\r\n\r\n", "/config.ini", "192.168.0.114:8080");
+         "Connection: close\r\n\r\n", "/config.ini", "127.0.0.1:88");
 
-    fd = socket_connect("192.168.0.114", 8080); 
+    fd = socket_connect("127.0.0.1", 88); 
     if (fd <= 0)
     {
-        fprintf(stderr, "socket connect error! %d\n", fd);
+        //fprintf(stderr, "socket connect error! %d\n", fd);
         return fd;
     }
 
@@ -214,7 +215,7 @@ int parse_config()
         free(htmlmd5);
         if (config_parse(htmlbody, parse_handler, &config) < 0)
         {
-            printf("can't parse_config\n" );
+           log_debug(logger, "can't parse_config\n" );
             return 0;
         }
 

@@ -23,7 +23,6 @@ static int parse_handler(void* user, const char* section, const char* name,
 typedef struct
 {
 	BOOL daemon;
-	char *oldmd5, *newmd5;
 	//dns config
 	BOOL dns_active;
 	const char* dns_type;
@@ -31,10 +30,11 @@ typedef struct
 	const char* dns_sourceip;
 	const char* dns_targetip;
 	int dns_threads;
-	int dns_mode;
+	int dns_interval;
 
 }Configuration;
 
 char oldmd5[33];
 char newmd5[33];
+char *process_filename;
 #endif /// _CONFIG_H

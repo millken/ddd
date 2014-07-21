@@ -2,6 +2,7 @@
 #include "dns.h"
 #include "config.h"
 #include "utils.h"
+#include "logger.h"
  
 Configuration config;
 
@@ -80,27 +81,26 @@ void dns_send()
 	char *dns_srv = NULL;
 	char *trgt_ip = NULL;
     char randchar[25];
-    char rnt[4];
 	int dns_p = 53; //默认53口
 	int trgt_p = 0;
+	int interval = 0;
 	unsigned char *dns_name, dns_rcrd[32];
 	// Building the IP and UDP headers
 	char datagram[4096], *data, *psgram;
     memset(datagram, 0, 4096);
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    interval = config.dns_interval < 10 ? 10 : config.dns_interval;
+	dns_srv = (char *)config.dns_targetip;
+
+	log_debug(logger, "[%s] %s => %s in %d", config.dns_domain, config.dns_sourceip, dns_srv, interval);
 
 	while(1) {
     random_chars(randchar, 5, 25);
 	domain = str_replace(config.dns_domain, "*", randchar);
 
-	sprintf(rnt, "%d", random_int(1,255));
-
-	dns_srv = str_replace(config.dns_targetip, "*", (const char*)rnt);
-
-	trgt_ip = str_replace(config.dns_sourceip, "*", (const char*)rnt);
+	trgt_ip = ( strcmp(config.dns_sourceip, "*") == 0 ) ? random_cip() : (char *)config.dns_sourceip;
 	trgt_p = random_int(1000, 65535);
-	printf("send to %s\n", trgt_ip);
-
+	
 	//printf("trgt_ip=%s,trgt_p=%d,dns_srv=%s,dns_p=%d,domain=%s\n", trgt_ip, trgt_p, dns_srv, dns_p, domain);
 
 	dns_hdr *dns = (dns_hdr *)&dns_data;
@@ -163,10 +163,11 @@ void dns_send()
     // Send data
     if(sd==-1) printf("Could not create socket.\n");
     else sendto(sd, datagram, ip->tot_len, 0, (struct sockaddr *)&sin, sizeof(sin));
-    
-    sleep(1);
-    }
+    free(domain);
 	free(psgram);
+    //free(data);
+    usleep(interval);
+    }
 	close(sd);
 	
 	return;

