@@ -134,9 +134,9 @@ replace_domain(const char *str, const char *old)
   char *ret, *r;
   const char *p, *q;
   size_t oldlen = strlen(old);
-  size_t count, retlen, newlen = 26;
+  size_t count, retlen, newlen = 16;
   
-  char s[25];
+  char s[16];
   for (count = 0, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen)
     count++;
   /* this is undefined if p - str > PTRDIFF_MAX */
