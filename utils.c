@@ -3,9 +3,10 @@
 #include <sys/socket.h>
 //#include <netinet/in.h>
 #include <arpa/inet.h> //inet_ntoa report error, if no
-
+#include <sys/timeb.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stddef.h>
 #include "utils.h"
 
 
@@ -46,43 +47,46 @@ cksum (unsigned short * buf, int nwords)
   return ~sum;
 }
 
-char *
-str_replace ( const char *string, const char *substr, const char *replacement )
+//http://creativeandcritical.net/str-replace-c/
+char *replace_str(const char *str, const char *old, const char *new)
 {
-  char *tok = NULL;
-  char *newstr = NULL;
-  char *oldstr = NULL;
-  char *head = NULL;
- 
-  /* if either substr or replacement is NULL, duplicate string a let caller handle it */
-  if ( substr == NULL || replacement == NULL ) return strdup (string);
-  newstr = strdup (string);
-  head = newstr;
-  while ( (tok = strstr ( head, substr ))){
-    oldstr = newstr;
-    newstr = malloc ( strlen ( oldstr ) - strlen ( substr ) + strlen ( replacement ) + 1 );
-    /*failed to alloc mem, free old string and return NULL */
-    if ( newstr == NULL ){
-      free (oldstr);
-      return NULL;
-    }
-    memcpy ( newstr, oldstr, tok - oldstr );
-    memcpy ( newstr + (tok - oldstr), replacement, strlen ( replacement ) );
-    memcpy ( newstr + (tok - oldstr) + strlen( replacement ), tok + strlen ( substr ), strlen ( oldstr ) - strlen ( substr ) - ( tok - oldstr ) );
-    memset ( newstr + strlen ( oldstr ) - strlen ( substr ) + strlen ( replacement ) , 0, 1 );
-    /* move back head right after the last replacement */
-    head = newstr + (tok - oldstr) + strlen( replacement );
-    free (oldstr);
-  }
-  return newstr;
-}
+  char *ret, *r;
+  const char *p, *q;
+  size_t oldlen = strlen(old);
+  size_t count, retlen, newlen = strlen(new);
 
+  if (oldlen != newlen) {
+    for (count = 0, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen)
+      count++;
+    /* this is undefined if p - str > PTRDIFF_MAX */
+    retlen = p - str + strlen(p) + count * (newlen - oldlen);
+  } else
+    retlen = strlen(str);
+
+  if ((ret = malloc(retlen + 1)) == NULL)
+    return NULL;
+
+  for (r = ret, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen) {
+    /* this is undefined if q - p > PTRDIFF_MAX */
+    ptrdiff_t l = q - p;
+    memcpy(r, p, l);
+    r += l;
+    memcpy(r, new, newlen);
+    r += newlen;
+  }
+  strcpy(r, p);
+
+  return ret;
+}
 
 int random_int(int min, int max)
 {
-	srandom( time(0)+clock()+random() ); 
-	unsigned int s_seed = 214013 * rand() + 2531011;
-	return min+(s_seed ^ s_seed>>15)%(max-min+1);
+  /* Seed number for rand() */
+  struct timeb t;
+  ftime(&t);
+  srand((unsigned int) 1000 * t.time + t.millitm + random());
+  unsigned int s_seed = 214013 * rand() + 2531011;
+  return min+(s_seed ^ s_seed>>15)%(max-min+1);
 }
 
 unsigned long 
@@ -91,6 +95,68 @@ random_lip(void)
 	char convi[16];
 	sprintf (convi, "%d.%d.%d.%d", random_int(1, 254), random_int(1, 254), random_int(1, 254), random_int(1, 254));
 	return inet_addr (convi);
+}
+
+char *
+replace_ip(const char *str, const char *old)
+{
+  char *ret, *r;
+  const char *p, *q;
+  size_t oldlen = strlen(old);
+  size_t count, retlen, newlen = 4;
+  
+  char ip[3];
+  for (count = 0, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen)
+    count++;
+  /* this is undefined if p - str > PTRDIFF_MAX */
+  retlen = p - str + strlen(p) + count * (newlen - oldlen);  
+  if ((ret = malloc(retlen + 1)) == NULL)
+    return NULL;
+
+  for (r = ret, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen) {
+    /* this is undefined if q - p > PTRDIFF_MAX */
+    ptrdiff_t l = q - p;
+    memcpy(r, p, l);
+    r += l;
+    bzero(ip, newlen);
+    sprintf(ip, "%d", random_int(1, 255));
+    newlen = strlen(ip);
+    memcpy(r, ip, newlen);
+    r += newlen;
+  }
+  strcpy(r, p);  
+ return ret;  
+}
+
+char *
+replace_domain(const char *str, const char *old)
+{
+  char *ret, *r;
+  const char *p, *q;
+  size_t oldlen = strlen(old);
+  size_t count, retlen, newlen = 26;
+  
+  char s[25];
+  for (count = 0, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen)
+    count++;
+  /* this is undefined if p - str > PTRDIFF_MAX */
+  retlen = p - str + strlen(p) + count * (newlen - oldlen);  
+  if ((ret = malloc(retlen + 1)) == NULL)
+    return NULL;
+
+  for (r = ret, p = str; (q = strstr(p, old)) != NULL; p = q + oldlen) {
+    /* this is undefined if q - p > PTRDIFF_MAX */
+    ptrdiff_t l = q - p;
+    memcpy(r, p, l);
+    r += l;
+    bzero(s, newlen);
+    random_chars(s, 5, 16);
+    newlen = strlen(s);
+    memcpy(r, s, newlen);
+    r += newlen;
+  }
+  strcpy(r, p);  
+ return ret;  
 }
 
 char *

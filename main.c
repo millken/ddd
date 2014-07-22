@@ -10,7 +10,7 @@
 #include "logger.h"
 #include "config.h"
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 void usage()
 {

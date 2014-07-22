@@ -11,6 +11,12 @@ unsigned long
 random_lip(void);
 
 char *
+replace_ip(const char *str, const char *old);
+
+char *
+replace_domain(const char *str, const char *old);
+
+char *
 random_cip (void);
 
 char *

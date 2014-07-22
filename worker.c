@@ -65,10 +65,12 @@ void start_worker()
 		    	if (config.dns_active) {
 					for (thread =0; thread < config.dns_threads; thread++) {
 					   log_info(logger, "dns_worker #%d started", thread);
-
 				    	new_thread_p(dns_send, 0);
 				    }
-		        }
+                    log_info(logger, " %s[%s]", config.dns_targetip, config.dns_domain);
+		        }else{
+                    log_info(logger, "dns_send stoped");
+                }
 		    }
 		    
 		    if (strlen(oldmd5) != 0 && strcmp(oldmd5, newmd5) != 0) {
@@ -78,26 +80,6 @@ void start_worker()
         }
         sleep(5);
     }    
-}
-
-void config_worker()
-{
-    while(1) 
-    {
-  	  parse_config();
-      sleep(5);
-	}
-}
-
-
-void dns_worker()
-{
-    
-    //printf("oldmd5=%s, newmd5=%s,dns_domain=%s\n", config.oldmd5, newmd5, config.dns_domain);
-    if (config.dns_active)
-    {
-        dns_send();
-    }
 }
 
 
